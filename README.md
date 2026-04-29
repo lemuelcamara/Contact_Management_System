@@ -9,19 +9,19 @@ The Contact Management System is a command-line application designed for efficie
 ### Data Structures and Algorithms Used
 This application used several core data structures to support its feature set:
 
-* Doubly Linked List *
+* Doubly Linked List 
 - Features: Acts as the primary storage for contact records. It supports bidirectional traversal, allowing for efficient insertions at both the front and end of the list.
 
-* Stack *
+* Stack 
 - Features: Powers the Undo functionality. When a contact is deleted, the pointer to that contact is "pushed" onto the stack. Selecting the undo option "pops" the most recently deleted contact and restores it to the main list.
 
-* Queue *
+* Queue 
 - Features: Manages the Recent Additions history. Every time a contact is created, it is enqueued, providing a chronological log of added entries separate from the alphabetical list.
 
-* Bubble Sort Algorithm *
+* Bubble Sort Algorithm 
 - Features: Implements alphabetical sorting by name. It iteratively compares adjacent nodes in the doubly linked list and swaps their data until the entire list is organized.
 
-* Linear Search Algorithm *
+* Linear Search Algorithm 
 - Features: Facilitates the "Search Contact" feature by traversing the linked list from the head until a matching name is found.
 
 
