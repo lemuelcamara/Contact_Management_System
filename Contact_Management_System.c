@@ -6,13 +6,15 @@
 
 typedef struct Contact {
     char name[50];
-    char phone[15];
+    char phone[11];
     struct Contact* prev;
     struct Contact* next;
 } Contact;
 
 typedef struct StackNode {
     Contact* data;
+    Contact* savedPrev;   /* neighbor at time of deletion */
+    Contact* savedNext;   /* neighbor at time of deletion */
     struct StackNode* next;
 } StackNode;
 
@@ -21,23 +23,24 @@ typedef struct QueueNode {
     struct QueueNode* next;
 } QueueNode;
 
-// Global Pointers
+/* Global Pointers */
 Contact* head = NULL;
 Contact* tail = NULL;
 StackNode* stackTop = NULL;
 QueueNode* queueFront = NULL;
 QueueNode* queueRear = NULL;
 
-int i; // Global for C89 compatibility
+int i; /* Global for C89 compatibility */
 
-// Function Prototypes
-void pushStack(Contact* contact);
+/* Function Prototypes */
+void pushStack(Contact* contact, Contact* savedPrev, Contact* savedNext);
 Contact* popStack();
 int isStackEmpty();
 void enqueue(Contact* contact);
 int isQueueEmpty();
 void insertEnd(Contact* newContact);
 void insertFront(Contact* newContact);
+void restoreContact(Contact* contact);
 void deleteContact(char* name);
 void displayList();
 int compareNames(const char* name1, const char* name2);
@@ -45,8 +48,24 @@ void bubbleSort();
 Contact* searchContact(char* name);
 void displayQueue();
 void displayStack();
+int isValidPhone(const char* phone);
 
-// Implementation
+/* Implementation */
+int isValidPhone(const char *phone) {  
+    int len = strlen(phone);
+    if (len != 11) {
+        printf("Error: Phone number must be exactly 11 digits!\n");
+        return 0;
+    }
+    for (i = 0; i < len; i++) {
+        if (!isdigit(phone[i])) {
+            printf("Error: Phone number must contain only digits (0-11)!\n");
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int compareNames(const char* name1, const char* name2) {
     char n1[50], n2[50];
     strcpy(n1, name1); strcpy(n2, name2);
@@ -104,18 +123,70 @@ void insertFront(Contact* newContact) {
     printf("Contact '%s' added to front!\n", newContact->name);
 }
 
+/*
+ * restoreContact: Re-inserts a deleted contact back into its ORIGINAL
+ * position using the prev/next pointers saved at deletion time.
+ *
+ * Four cases:
+ *   1. List is now empty            -> becomes the only node
+ *   2. savedPrev == NULL            -> was the head; restore to front
+ *   3. savedNext == NULL            -> was the tail; restore to back
+ *   4. Both neighbors still exist   -> splice back between them
+ */
+void restoreContact(Contact* contact) {
+    Contact* sp = contact->prev; /* saved previous neighbor */
+    Contact* sn = contact->next; /* saved next neighbor */
+
+    if (head == NULL) {
+        /* List is empty - simply make it the sole node */
+        contact->prev = NULL;
+        contact->next = NULL;
+        head = tail = contact;
+    } else if (sp == NULL) {
+        /* Contact was originally the head */
+        contact->prev = NULL;
+        contact->next = head;
+        head->prev = contact;
+        head = contact;
+    } else if (sn == NULL) {
+        /* Contact was originally the tail */
+        contact->next = NULL;
+        contact->prev = tail;
+        tail->next = contact;
+        tail = contact;
+    } else {
+        /* Contact was in the middle; splice back between sp and sn */
+        contact->prev = sp;
+        contact->next = sn;
+        sp->next = contact;
+        sn->prev = contact;
+    }
+
+    printf("Contact '%s' restored to its original position!\n", contact->name);
+}
+
 void deleteContact(char* name) {
     Contact* contact = searchContact(name);
     if (contact == NULL) {
         printf("Contact '%s' not found!\n", name);
         return;
     }
+
+    /* Save neighbor pointers BEFORE unlinking */
+    Contact* savedPrev = contact->prev;
+    Contact* savedNext = contact->next;
+
     if (contact->prev != NULL) contact->prev->next = contact->next;
     else head = contact->next;
     if (contact->next != NULL) contact->next->prev = contact->prev;
     else tail = contact->prev;
 
-    pushStack(contact);
+    /* Keep prev/next in the node itself so restoreContact() can use them,
+       and also push them separately into the stack record. */
+    contact->prev = savedPrev;
+    contact->next = savedNext;
+
+    pushStack(contact, savedPrev, savedNext);
     printf("Contact '%s' deleted (can be undone with '9')!\n", name);
 }
 
@@ -130,17 +201,22 @@ void displayList() {
     }
 }
 
-void pushStack(Contact* contact) {
+void pushStack(Contact* contact, Contact* savedPrev, Contact* savedNext) {
     StackNode* newNode = (StackNode*)malloc(sizeof(StackNode));
-    newNode->data = contact;
-    newNode->next = stackTop;
-    stackTop = newNode;
+    newNode->data      = contact;
+    newNode->savedPrev = savedPrev;
+    newNode->savedNext = savedNext;
+    newNode->next      = stackTop;
+    stackTop           = newNode;
 }
 
 Contact* popStack() {
     if (isStackEmpty()) return NULL;
-    StackNode* temp = stackTop;
-    Contact* contact = temp->data;
+    StackNode* temp    = stackTop;
+    Contact*   contact = temp->data;
+    /* Restore the saved neighbors back into the contact node */
+    contact->prev = temp->savedPrev;
+    contact->next = temp->savedNext;
     stackTop = stackTop->next;
     free(temp);
     return contact;
@@ -203,23 +279,48 @@ int main() {
         printf("Choice: ");
         
         scanf("%d", &choice); 
-        getchar(); // Consumes the newline character
+        getchar();
         
         switch (choice) {
             case 1:
-                printf("Name: "); fgets(name, 50, stdin); name[strcspn(name, "\n")] = 0;
-                printf("Phone: "); fgets(phone, 15, stdin); phone[strcspn(phone, "\n")] = 0;
-                Contact* nc1 = (Contact*)malloc(sizeof(Contact));
-                strcpy(nc1->name, name); strcpy(nc1->phone, phone);
-                insertEnd(nc1); 
-                break;
+    			printf("Name: ");
+   				fgets(name, 50, stdin);
+    			name[strcspn(name, "\n")] = 0;
+   				while (1) {
+   				printf("Phone: ");
+   				fgets(phone, 15, stdin);
+   				phone[strcspn(phone, "\n")] = 0;
+   				
+  				if (isValidPhone(phone)) {
+  	        	break;  
+			    }
+			    while (getchar() != '\n');
+			    printf("Insert number not special character/Letter.\n");
+			    }
+			    Contact *nc1 = (Contact *)malloc(sizeof(Contact));
+			    strcpy(nc1->name, name);
+			    strcpy(nc1->phone, phone);
+			    insertEnd(nc1);
+			    break;
             case 2:
-                printf("Name: "); fgets(name, 50, stdin); name[strcspn(name, "\n")] = 0;
-                printf("Phone: "); fgets(phone, 15, stdin); phone[strcspn(phone, "\n")] = 0;
-                Contact* nc2 = (Contact*)malloc(sizeof(Contact));
-                strcpy(nc2->name, name); strcpy(nc2->phone, phone);
-                insertFront(nc2); 
-                break;
+   				printf("Name: ");
+    			fgets(name, 50, stdin);
+    			name[strcspn(name, "\n")] = 0;
+    			while (1) {
+		        printf("Phone: ");
+		        fgets(phone, 15, stdin);
+		        phone[strcspn(phone, "\n")] = 0;
+		        if (isValidPhone(phone)) {
+		            break;
+		        }
+		        while (getchar() != '\n');
+		        printf("Please try again.\n");
+			    }
+			    Contact *nc2 = (Contact *)malloc(sizeof(Contact));
+			    strcpy(nc2->name, name);
+			    strcpy(nc2->phone, phone);
+			    insertFront(nc2);
+			    break;
             case 3: displayList(); break;
             case 4:
                 printf("Enter name to search: "); fgets(searchName, 50, stdin); searchName[strcspn(searchName, "\n")] = 0;
@@ -236,7 +337,7 @@ int main() {
             case 8: displayStack(); break;
             case 9: {
                 Contact* u = popStack();
-                if (u) { insertEnd(u); printf("Restored: %s\n", u->name); }
+                if (u) { restoreContact(u); }
                 else printf("Nothing to undo!\n"); 
                 break;
             }
@@ -252,11 +353,18 @@ int main() {
    Surendra, BH. Sai, et al. Contact Management System: Mini Project for 
    C-Programming. Raghu Institute of Technology, 2019. Scribd, 
    www.scribd.com/document/439870540/Contact-management-system-C-programming-project-by-Raghu.
-*/	
-
+*/
 
 /* CITATION: Logic for Undo/Redo mechanisms using Stacks and Doubly Linked Lists.
    Reference: Sedgewick, Robert, and Kevin Wayne. "Algorithms, 4th Edition." 
    Pearson Education, 2011. Linked List Implementations.
    Link: https://algs4.cs.princeton.edu/13stacks/
+*/
+
+/* CITATION: Positional Undo Fix - Restoring a deleted node to its original
+   position in a doubly linked list by preserving neighbor pointers at
+   deletion time and re-splicing on undo.
+   Prompt: "Please make sure when the user deletes a contact and undoes the
+   last delete it must go back to the same node position it was placed."
+   Submitted to: Claude (claude-sonnet-4-20250514). Anthropic, 4 May 2026.
 */
