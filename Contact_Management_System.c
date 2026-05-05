@@ -5,7 +5,7 @@
 
 
 typedef struct Contact {
-    char name[50];
+    char name[30];
     char phone[11];
     struct Contact* prev;
     struct Contact* next;
@@ -13,8 +13,8 @@ typedef struct Contact {
 
 typedef struct StackNode {
     Contact* data;
-    Contact* savedPrev;   /* neighbor at time of deletion */
-    Contact* savedNext;   /* neighbor at time of deletion */
+    Contact* savedPrev;   // neighbor at time of deletion 
+    Contact* savedNext;   // neighbor at time of deletion
     struct StackNode* next;
 } StackNode;
 
@@ -23,16 +23,16 @@ typedef struct QueueNode {
     struct QueueNode* next;
 } QueueNode;
 
-/* Global Pointers */
+// Global Pointers
 Contact* head = NULL;
 Contact* tail = NULL;
 StackNode* stackTop = NULL;
 QueueNode* queueFront = NULL;
 QueueNode* queueRear = NULL;
 
-int i; /* Global for C89 compatibility */
+int i; // Global for C89 compatibility
 
-/* Function Prototypes */
+// Function Prototypes
 void pushStack(Contact* contact, Contact* savedPrev, Contact* savedNext);
 Contact* popStack();
 int isStackEmpty();
@@ -50,7 +50,7 @@ void displayQueue();
 void displayStack();
 int isValidPhone(const char* phone);
 
-/* Implementation */
+// Implementation of functions
 int isValidPhone(const char *phone) {  
     int len = strlen(phone);
     if (len != 11) {
@@ -93,7 +93,7 @@ void bubbleSort() {
         }
         lptr = ptr1;
     } while (swapped);
-    printf("Contacts sorted alphabetically by name using bubble sort!\n");
+    printf("Contacts successfully sorted alphabetically!\n");
 }
 
 Contact* searchContact(char* name) {
@@ -123,46 +123,36 @@ void insertFront(Contact* newContact) {
     printf("Contact '%s' added to front!\n", newContact->name);
 }
 
-/*
- * restoreContact: Re-inserts a deleted contact back into its ORIGINAL
- * position using the prev/next pointers saved at deletion time.
- *
- * Four cases:
- *   1. List is now empty            -> becomes the only node
- *   2. savedPrev == NULL            -> was the head; restore to front
- *   3. savedNext == NULL            -> was the tail; restore to back
- *   4. Both neighbors still exist   -> splice back between them
- */
 void restoreContact(Contact* contact) {
-    Contact* sp = contact->prev; /* saved previous neighbor */
-    Contact* sn = contact->next; /* saved next neighbor */
+    Contact* sp = contact->prev; // saved previous neighbor
+    Contact* sn = contact->next; // saved next neighbor
 
     if (head == NULL) {
-        /* List is empty - simply make it the sole node */
+        // List is empty - simply make it the sole node
         contact->prev = NULL;
         contact->next = NULL;
         head = tail = contact;
     } else if (sp == NULL) {
-        /* Contact was originally the head */
+        // Contact was originally the head
         contact->prev = NULL;
         contact->next = head;
         head->prev = contact;
         head = contact;
     } else if (sn == NULL) {
-        /* Contact was originally the tail */
+        // Contact was originally the tail
         contact->next = NULL;
         contact->prev = tail;
         tail->next = contact;
         tail = contact;
     } else {
-        /* Contact was in the middle; splice back between sp and sn */
+        // Contact was in the middle; splice back between sp and sn
         contact->prev = sp;
         contact->next = sn;
         sp->next = contact;
         sn->prev = contact;
     }
 
-    printf("Contact '%s' restored to its original position!\n", contact->name);
+    printf("Contact '%s' successfully restored to its original position!\n", contact->name);
 }
 
 void deleteContact(char* name) {
@@ -172,7 +162,7 @@ void deleteContact(char* name) {
         return;
     }
 
-    /* Save neighbor pointers BEFORE unlinking */
+    // Save neighbor pointers BEFORE unlinking
     Contact* savedPrev = contact->prev;
     Contact* savedNext = contact->next;
 
@@ -214,7 +204,7 @@ Contact* popStack() {
     if (isStackEmpty()) return NULL;
     StackNode* temp    = stackTop;
     Contact*   contact = temp->data;
-    /* Restore the saved neighbors back into the contact node */
+    // Restore the saved neighbors back into the contact node
     contact->prev = temp->savedPrev;
     contact->next = temp->savedNext;
     stackTop = stackTop->next;
@@ -271,9 +261,9 @@ int main() {
         printf("3. Display All Contacts\n");
         printf("4. Search Contact\n");
         printf("5. Delete Contact\n");
-        printf("6. Sort Contacts (Bubble Sort)\n");
-        printf("7. Show Recent Additions (Queue)\n");
-        printf("8. Show Deleted (Undo Stack)\n");
+        printf("6. Show Recent Additions\n");
+        printf("7. Sort Contacts\n");
+        printf("8. Show Deleted\n");
         printf("9. Undo Last Delete\n");
         printf("0. Exit\n");
         printf("Choice: ");
@@ -295,7 +285,7 @@ int main() {
   	        	break;  
 			    }
 			    while (getchar() != '\n');
-			    printf("Insert number not special character/Letter.\n");
+			    printf("Insert number, not special character/Letter!\n");
 			    }
 			    Contact *nc1 = (Contact *)malloc(sizeof(Contact));
 			    strcpy(nc1->name, name);
@@ -332,13 +322,13 @@ int main() {
                 printf("Enter name to delete: "); fgets(searchName, 50, stdin); searchName[strcspn(searchName, "\n")] = 0;
                 deleteContact(searchName); 
                 break;
-            case 6: bubbleSort(); displayList(); break;
-            case 7: displayQueue(); break;
+            case 6: displayQueue(); break;
+            case 7: bubbleSort(); displayList(); break;
             case 8: displayStack(); break;
             case 9: {
                 Contact* u = popStack();
                 if (u) { restoreContact(u); }
-                else printf("Nothing to undo!\n"); 
+                else printf("Nothing to undo here!\n"); 
                 break;
             }
             case 0: 
