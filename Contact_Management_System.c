@@ -3,18 +3,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 typedef struct Contact {
     char name[30];
-    char phone[11];
+    char phone[15];       
     struct Contact* prev;
     struct Contact* next;
 } Contact;
 
 typedef struct StackNode {
     Contact* data;
-    Contact* savedPrev;   // neighbor at time of deletion 
-    Contact* savedNext;   // neighbor at time of deletion
+    Contact* savedPrev;   
+    Contact* savedNext;   
     struct StackNode* next;
 } StackNode;
 
@@ -54,20 +53,18 @@ int isValidPhone(const char* phone);
 int isValidPhone(const char *phone) {  
     int len = strlen(phone);
     if (len != 11) {
-        printf("Error: Phone number must be exactly 11 digits!\n");
-        return 0;
+        return 0; // Silently fail, let the main loop print the error
     }
     for (i = 0; i < len; i++) {
         if (!isdigit(phone[i])) {
-            printf("Error: Phone number must contain only digits (0-11)!\n");
-            return 0;
+            return 0; // Silently fail, let the main loop print the error
         }
     }
-    return 1;
+    return 1; // Success
 }
 
 int compareNames(const char* name1, const char* name2) {
-    char n1[50], n2[50];
+    char n1[30], n2[30];
     strcpy(n1, name1); strcpy(n2, name2);
     for (i = 0; n1[i]; i++) n1[i] = tolower(n1[i]);
     for (i = 0; n2[i]; i++) n2[i] = tolower(n2[i]);
@@ -83,8 +80,8 @@ void bubbleSort() {
         swapped = 0;
         ptr1 = head;
         while (ptr1->next != lptr) {
-            if (compareNames(ptr1->name, ptr1->next->name) > 1) {
-                char tempName[50], tempPhone[15];
+            if (compareNames(ptr1->name, ptr1->next->name) > 0) {
+                char tempName[30], tempPhone[15]; 
                 strcpy(tempName, ptr1->name); strcpy(ptr1->name, ptr1->next->name); strcpy(ptr1->next->name, tempName);
                 strcpy(tempPhone, ptr1->phone); strcpy(ptr1->phone, ptr1->next->phone); strcpy(ptr1->next->phone, tempPhone);
                 swapped = 1;
@@ -124,28 +121,24 @@ void insertFront(Contact* newContact) {
 }
 
 void restoreContact(Contact* contact) {
-    Contact* sp = contact->prev; // saved previous neighbor
-    Contact* sn = contact->next; // saved next neighbor
+    Contact* sp = contact->prev; 
+    Contact* sn = contact->next; 
 
     if (head == NULL) {
-        // List is empty - simply make it the sole node
         contact->prev = NULL;
         contact->next = NULL;
         head = tail = contact;
     } else if (sp == NULL) {
-        // Contact was originally the head
         contact->prev = NULL;
         contact->next = head;
         head->prev = contact;
         head = contact;
     } else if (sn == NULL) {
-        // Contact was originally the tail
         contact->next = NULL;
         contact->prev = tail;
         tail->next = contact;
         tail = contact;
     } else {
-        // Contact was in the middle; splice back between sp and sn
         contact->prev = sp;
         contact->next = sn;
         sp->next = contact;
@@ -162,7 +155,6 @@ void deleteContact(char* name) {
         return;
     }
 
-    // Save neighbor pointers BEFORE unlinking
     Contact* savedPrev = contact->prev;
     Contact* savedNext = contact->next;
 
@@ -171,8 +163,6 @@ void deleteContact(char* name) {
     if (contact->next != NULL) contact->next->prev = contact->prev;
     else tail = contact->prev;
 
-    /* Keep prev/next in the node itself so restoreContact() can use them,
-       and also push them separately into the stack record. */
     contact->prev = savedPrev;
     contact->next = savedNext;
 
@@ -203,8 +193,7 @@ void pushStack(Contact* contact, Contact* savedPrev, Contact* savedNext) {
 Contact* popStack() {
     if (isStackEmpty()) return NULL;
     StackNode* temp    = stackTop;
-    Contact*   contact = temp->data;
-    // Restore the saved neighbors back into the contact node
+    Contact* contact = temp->data;
     contact->prev = temp->savedPrev;
     contact->next = temp->savedNext;
     stackTop = stackTop->next;
@@ -248,9 +237,9 @@ void displayStack() {
 
 int main() {
     int choice;
-    char name[50];
-	char phone[15];
-	char searchName[50];
+    char name[30];
+    char phone[15];
+    char searchName[30];
     
     printf("=== CONTACT MANAGEMENT SYSTEM ===\n");
     
@@ -273,44 +262,45 @@ int main() {
         
         switch (choice) {
             case 1:
-    			printf("Name: ");
-   				fgets(name, 50, stdin);
-    			name[strcspn(name, "\n")] = 0;
-   				while (1) {
-   				printf("Phone: ");
-   				fgets(phone, 15, stdin);
-   				phone[strcspn(phone, "\n")] = 0;
-   				
-  				if (isValidPhone(phone)) {
-  	        	break;  
-			    }
-			    while (getchar() != '\n');
-			    printf("Insert number, not special character/Letter!\n");
-			    }
-			    Contact *nc1 = (Contact *)malloc(sizeof(Contact));
-			    strcpy(nc1->name, name);
-			    strcpy(nc1->phone, phone);
-			    insertEnd(nc1);
-			    break;
+                printf("Name: ");
+                fgets(name, 50, stdin);
+                name[strcspn(name, "\n")] = 0;
+                while (1) {
+                    printf("Phone: ");
+                    fgets(phone, sizeof(phone), stdin); 
+                    phone[strcspn(phone, "\n")] = 0;
+                    
+                    if (isValidPhone(phone)) {
+                        printf("the phone number is inserted successfully\n");
+                        break;  
+                    }
+                    printf("Insert 11 digit number, no special characters or letters!\n");
+                }
+                Contact *nc1 = (Contact *)malloc(sizeof(Contact));
+                strcpy(nc1->name, name);
+                strcpy(nc1->phone, phone);
+                insertEnd(nc1);
+                break;
             case 2:
-   				printf("Name: ");
-    			fgets(name, 50, stdin);
-    			name[strcspn(name, "\n")] = 0;
-    			while (1) {
-		        printf("Phone: ");
-		        fgets(phone, 15, stdin);
-		        phone[strcspn(phone, "\n")] = 0;
-		        if (isValidPhone(phone)) {
-		            break;
-		        }
-		        while (getchar() != '\n');
-		        printf("Please try again.\n");
-			    }
-			    Contact *nc2 = (Contact *)malloc(sizeof(Contact));
-			    strcpy(nc2->name, name);
-			    strcpy(nc2->phone, phone);
-			    insertFront(nc2);
-			    break;
+                printf("Name: ");
+                fgets(name, 50, stdin);
+                name[strcspn(name, "\n")] = 0;
+                while (1) {
+                    printf("Phone: ");
+                    fgets(phone, sizeof(phone), stdin); 
+                    phone[strcspn(phone, "\n")] = 0;
+                    
+                    if (isValidPhone(phone)) {
+                        printf("the phone number is inserted successfully\n");
+                        break;
+                    }
+                    printf("Insert 11 digit number, no special characters or letters!\n");
+                }
+                Contact *nc2 = (Contact *)malloc(sizeof(Contact));
+                strcpy(nc2->name, name);
+                strcpy(nc2->phone, phone);
+                insertFront(nc2);
+                break;
             case 3: displayList(); break;
             case 4:
                 printf("Enter name to search: "); fgets(searchName, 50, stdin); searchName[strcspn(searchName, "\n")] = 0;
@@ -332,7 +322,7 @@ int main() {
                 break;
             }
             case 0: 
-			exit(0);
+                exit(0);
             default: printf("Invalid choice!\n");
         }
     }
