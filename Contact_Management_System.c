@@ -1,4 +1,4 @@
-#include <ctype.h>
+#include <ctype.h> 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,7 +83,7 @@ void bubbleSort() {
         swapped = 0;
         ptr1 = head;
         while (ptr1->next != lptr) {
-            if (compareNames(ptr1->name, ptr1->next->name) > 0) {
+            if (compareNames(ptr1->name, ptr1->next->name) > 1) {
                 char tempName[50], tempPhone[15];
                 strcpy(tempName, ptr1->name); strcpy(ptr1->name, ptr1->next->name); strcpy(ptr1->next->name, tempName);
                 strcpy(tempPhone, ptr1->phone); strcpy(ptr1->phone, ptr1->next->phone); strcpy(ptr1->next->phone, tempPhone);
